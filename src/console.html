@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>KV Store 集群控制台</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --panel:#ffffff; --line:#e3e6ef; --text:#1c2233; --muted:#68708a;
+    --blue:#2f6bff; --green:#12a05c; --red:#e0483d; --amber:#d98b00; --purple:#7b5cf0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;font-size:14px}
+  header{background:#fff;border-bottom:1px solid var(--line);padding:14px 22px;
+         display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.3px}
+  .pill{padding:3px 10px;border-radius:20px;font-size:12px;border:1px solid var(--line);
+        background:#f2f4fa;color:var(--muted)}
+  .pill.ok{background:#e8f8ef;color:var(--green);border-color:#bfe8d3}
+  .pill.bad{background:#fdecea;color:var(--red);border-color:#f6c9c4}
+  main{padding:18px 22px 40px;max-width:1400px;margin:0 auto}
+  .grid{display:grid;gap:14px}
+  .cards{grid-template-columns:repeat(3,1fr)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .panel h2{font-size:13px;margin:0 0 10px;color:var(--muted);font-weight:600;
+            letter-spacing:.6px;text-transform:uppercase}
+  .node{position:relative;transition:.2s}
+  .node.dead{opacity:.55;background:#fbfbfd}
+  .node.leader{border-color:#bcd0ff;box-shadow:0 0 0 3px #eef3ff}
+  .node-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .node-title b{font-size:15px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+  .tag.leader{background:#e7efff;color:var(--blue)}
+  .tag.follower{background:#f0f1f6;color:var(--muted)}
+  .tag.candidate{background:#fff4e0;color:var(--amber)}
+  .tag.dead{background:#fdecea;color:var(--red)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px}
+  .kv span:nth-child(odd){color:var(--muted)}
+  .kv span:nth-child(even){font-variant-numeric:tabular-nums;font-family:Consolas,monospace}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eef0f6}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  td.num{font-family:Consolas,monospace;font-variant-numeric:tabular-nums}
+  .total{font-size:15px;font-weight:700;color:var(--blue)}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--text);padding:7px 11px;
+       border-radius:8px;cursor:pointer;font-size:12.5px;transition:.15s}
+  .btn:hover{border-color:#c3cbe0;background:#f8f9fe}
+  .btn:active{transform:translateY(1px)}
+  .btn.danger{color:var(--red);border-color:#f2ccc8}
+  .btn.warn{color:var(--amber);border-color:#f0ddb8}
+  .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.ghost{color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  input,select{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px;
+               background:#fff;color:var(--text);width:100%}
+  .cols{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-top:14px}
+  .cols3{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  #events{max-height:250px;overflow:auto;font-size:12.5px;line-height:1.75}
+  #events div{display:flex;gap:8px}
+  #events .t{color:#9aa1b6;font-family:Consolas,monospace;min-width:62px}
+  #events .good{color:var(--green)} #events .warn{color:var(--red)}
+  #events .info{color:#3a4359}
+  pre{margin:0;max-height:250px;overflow:auto;font-size:11.5px;line-height:1.55;
+      background:#fafbfe;border:1px solid #eef0f6;border-radius:8px;padding:10px;color:#3a4359}
+  .hint{color:var(--muted);font-size:12px;line-height:1.7}
+  .res{font-family:Consolas,monospace;font-size:12px;color:#3a4359;margin-top:8px;
+       white-space:pre-wrap;word-break:break-all}
+  .badge{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
+  .badge.on{background:var(--green)} .badge.off{background:#c8ccda}
+  .mono{font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>并行与分布 · 分布式 KV Store 控制台</h1>
+  <span class="pill" id="leaderPill">leader：—</span>
+  <span class="pill" id="totalPill">总余额：—</span>
+  <span class="pill" id="clockPill">—</span>
+  <span style="margin-left:auto" class="hint">每 800ms 自动刷新</span>
+</header>
+
+<main>
+  <div class="grid cards" id="nodes"></div>
+
+  <div class="cols3">
+    <div class="panel">
+      <h2>账户账本（取自 leader 状态机）</h2>
+      <table>
+        <thead><tr><th>账户</th><th>余额</th><th>版本号</th><th>说明</th></tr></thead>
+        <tbody id="accounts"></tbody>
+      </table>
+      <div class="hint" style="margin-top:10px">
+        总余额必须恒为 5000 —— 这是"钱不会凭空产生或消失"的唯一凭据。
+      </div>
+    </div>
+    <div class="panel">
+      <h2>业务操作</h2>
+      <div class="row">
+        <select id="from" style="flex:1"></select>
+        <span style="align-self:center;color:var(--muted)">→</span>
+        <select id="to" style="flex:1"></select>
+        <input id="amount" type="number" value="100" style="width:90px">
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="op('transfer')">转账一次</button>
+        <button class="btn" onclick="op('repeat_transfer',{times:3})">同一请求连发 3 次</button>
+        <button class="btn ghost" onclick="op('reset',{amount:1000})">重置账本</button>
+      </div>
+      <div class="row">
+        <input id="casKey" value="A" style="width:80px">
+        <input id="casExpect" type="number" value="2" style="width:90px">
+        <input id="casVal" type="number" value="999" style="width:90px">
+        <button class="btn" onclick="doCas()">CAS 写入</button>
+        <button class="btn ghost" onclick="op('get',{key:document.getElementById('casKey').value})">线性读</button>
+      </div>
+      <div class="res" id="opResult">等待操作…</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <h2>故障注入（现场演示用）</h2>
+      <div class="row">
+        <button class="btn danger" onclick="post('/api/killleader',{})">杀掉当前 leader</button>
+        <button class="btn" onclick="post('/api/node',{id:1,action:'restart'})">重启节点1</button>
+        <button class="btn" onclick="post('/api/node',{id:2,action:'restart'})">重启节点2</button>
+        <button class="btn" onclick="post('/api/node',{id:3,action:'restart'})">重启节点3</button>
+      </div>
+      <div class="row">
+        <button class="btn warn" onclick="post('/api/partition',{groups:[[1],[2,3]]})">分区：孤主 1 | 2,3</button>
+        <button class="btn warn" onclick="post('/api/partition',{groups:[[1,2],[3]]})">分区：1,2 | 3</button>
+        <button class="btn" onclick="post('/api/heal',{})">恢复网络</button>
+      </div>
+      <div class="row">
+        <button class="btn warn" onclick="admin({cmd:'delay',ms:10000,target:'all'})">消息延迟 10s</button>
+        <button class="btn warn" onclick="admin({cmd:'dup',n:3,target:'all'})">消息重复 ×3</button>
+        <button class="btn warn" onclick="admin({cmd:'clock',delta_ms:-60000,target:'all'})">时钟倒退 60s</button>
+        <button class="btn" onclick="admin({cmd:'delay',ms:0,target:'all'});admin({cmd:'dup',n:0,target:'all'})">清除延迟/重复</button>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="bench('multi')">压测 200 次（50 key）</button>
+        <button class="btn" onclick="bench('single')">压测 200 次（单 key 热点）</button>
+        <button class="btn ghost" onclick="post('/api/reset_data',{})">清空数据重启</button>
+      </div>
+      <div class="res" id="adminResult">—</div>
+    </div>
+
+    <div class="panel">
+      <h2>事件时间线</h2>
+      <div id="events"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <h2>节点日志
+      <select id="logNode" style="width:auto;display:inline-block;margin-left:8px;padding:3px 8px"
+              onchange="refreshLogs()">
+        <option value="1">节点 1</option><option value="2">节点 2</option><option value="3">节点 3</option>
+      </select>
+    </h2>
+    <pre id="logs">—</pre>
+  </div>
+</main>
+
+<script>
+const N = 3;
+const ACCTS = ['A','B','C','D','E'];
+
+function el(id){return document.getElementById(id)}
+
+async function getJSON(url){
+  const r = await fetch(url, {cache:'no-store'});
+  return await r.json();
+}
+async function post(url, body){
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
+                              body:JSON.stringify(body||{})});
+  const j = await r.json();
+  return j;
+}
+
+async function refresh(){
+  let d;
+  try { d = await getJSON('/api/cluster'); } catch(e){ return; }
+  renderNodes(d);
+  renderAccounts(d);
+  renderEvents(d.events);
+  el('leaderPill').textContent = d.leader ? ('leader：节点 ' + d.leader) : 'leader：无（选主中）';
+  el('leaderPill').className = 'pill ' + (d.leader ? 'ok' : 'bad');
+  el('totalPill').textContent = '总余额：' + (d.total==null ? '—' : d.total);
+  el('clockPill').textContent = '快照 ' + new Date().toLocaleTimeString();
+}
+
+function renderNodes(d){
+  const box = el('nodes');
+  box.innerHTML = d.nodes.map((n,i)=>{
+    const id = i+1;
+    let tag = 'follower', cls = '';
+    if (!n.alive || !n.process_alive) { tag = '已宕机'; cls = 'dead'; }
+    else if (n.state === 'leader') { tag = 'LEADER'; cls = ''; }
+    else if (n.state === 'candidate') { tag = '竞选'; cls = ''; }
+    const tagCls = tag==='LEADER'?'leader':(tag==='已宕机'?'dead':(tag==='竞选'?'candidate':'follower'));
+    const blocked = (n.blocked||[]).length ? n.blocked.join(',') : '无';
+    const kvLine = n.alive ? `
+      <div class="kv">
+        <span>任期 term</span><span>${n.term}</span>
+        <span>提交下标</span><span>${n.commit_index}</span>
+        <span>已应用</span><span>${n.last_applied}</span>
+        <span>日志条数</span><span>${n.log_len}</span>
+        <span>多数派</span><span>${n.quorum} / ${N}</span>
+        <span>被隔离</span><span>${blocked}</span>
+        <span>延迟/重复</span><span>${n.delay_ms}ms / ×${n.dup_extra}</span>
+        <span>幂等表</span><span>${n.dedup_size} 条</span>
+      </div>` : `<div class="hint">进程已停止，数据仍在磁盘上（log.jsonl）</div>`;
+    return `<div class="panel node ${cls}">
+      <div class="node-title">
+        <b><span class="badge ${n.alive?'on':'off'}"></span>节点 ${id}
+          <span class="hint" style="margin-left:6px">:${(d.ports||[])[i]||''}</span></b>
+        <span class="tag ${tagCls}">${tag}</span>
+      </div>${kvLine}</div>`;
+  }).join('');
+}
+
+function renderAccounts(d){
+  const t = d.truth || {};
+  const rows = ACCTS.map(k=>{
+    const v = t[k];
+    return `<tr><td class="mono">${k}</td>
+      <td class="num">${v? v.value : '—'}</td>
+      <td class="num">${v? v.version : '—'}</td>
+      <td class="hint">${v? (v.version>1? '已发生写入':'初始') : '不存在'}</td></tr>`;
+  });
+  el('accounts').innerHTML = rows.join('') +
+    `<tr><td><b>合计</b></td><td class="num total">${d.total==null?'—':d.total}</td><td></td>
+     <td class="hint">应恒等于 5000</td></tr>`;
+}
+
+function renderEvents(evs){
+  el('events').innerHTML = (evs||[]).slice().reverse().map(e=>
+    `<div><span class="t">${e.t}</span><span class="${e.kind}">${e.text}</span></div>`
+  ).join('');
+}
+
+async function op(kind, extra){
+  const body = Object.assign({
+    op: kind,
+    from: el('from').value, to: el('to').value,
+    amount: parseInt(el('amount').value||'0')
+  }, extra||{});
+  const t0 = performance.now();
+  const r = await post('/api/op', body);
+  const dt = Math.round(performance.now()-t0);
+  el('opResult').textContent = `${kind} 用时 ${dt}ms\n` + JSON.stringify(r, null, 2);
+  refresh();
+}
+
+async function doCas(){
+  const r = await post('/api/op', {op:'cas', key:el('casKey').value,
+    expect_version:parseInt(el('casExpect').value), value:parseInt(el('casVal').value)});
+  el('opResult').textContent = 'cas\n' + JSON.stringify(r,null,2);
+  refresh();
+}
+
+async function admin(body){
+  const r = await post('/api/admin', body);
+  el('adminResult').textContent = JSON.stringify(body) + ' → ok';
+  refresh();
+}
+
+async function bench(keys){
+  el('adminResult').textContent = '压测中…';
+  const r = await post('/api/bench', {n:200, keys:keys, concurrency:4});
+  el('adminResult').textContent = JSON.stringify(r, null, 2);
+  refresh();
+}
+
+async function refreshLogs(){
+  const nid = el('logNode').value;
+  const d = await getJSON('/api/logs?node='+nid);
+  el('logs').textContent = (d.lines||[]).join('\n') || '（暂无日志）';
+  el('logs').scrollTop = el('logs').scrollHeight;
+}
+
+function initSelects(){
+  const opts = ACCTS.map(k=>`<option>${k}</option>`).join('');
+  el('from').innerHTML = opts;
+  el('to').innerHTML = opts;
+  el('from').value = 'A'; el('to').value = 'B';
+}
+
+initSelects();
+refresh();
+refreshLogs();
+setInterval(refresh, 800);
+setInterval(refreshLogs, 1500);
+</script>
+</body>
+</html>

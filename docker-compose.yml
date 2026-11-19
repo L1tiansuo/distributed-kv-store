@@ -1,0 +1,52 @@
+# 3 副本 KV Store（容器方式，可选）
+# 三个节点各自一个容器，容器内统一用 7301，对外映射 7301/7302/7303。
+# 对等地址用服务名 node1/node2/node3，因此节点要 --bind 0.0.0.0。
+#
+#   docker compose up --build
+#   python src/client.py --ports 7301,7302,7303 status
+#
+# 注意：报告与实验数据都是在本机多进程方式下跑出来的，这套 compose 文件
+# 提供的是部署路径，未参与实验数据采集。
+
+services:
+  node1:
+    build: .
+    command:
+      - "--id=1"
+      - "--port=7301"
+      - "--bind=0.0.0.0"
+      - "--peers=1@node1:7301,2@node2:7301,3@node3:7301"
+      - "--data=/data"
+    ports:
+      - "7301:7301"
+    volumes:
+      - ./data_docker/node1:/data
+    restart: unless-stopped
+
+  node2:
+    build: .
+    command:
+      - "--id=2"
+      - "--port=7301"
+      - "--bind=0.0.0.0"
+      - "--peers=1@node1:7301,2@node2:7301,3@node3:7301"
+      - "--data=/data"
+    ports:
+      - "7302:7301"
+    volumes:
+      - ./data_docker/node2:/data
+    restart: unless-stopped
+
+  node3:
+    build: .
+    command:
+      - "--id=3"
+      - "--port=7301"
+      - "--bind=0.0.0.0"
+      - "--peers=1@node1:7301,2@node2:7301,3@node3:7301"
+      - "--data=/data"
+    ports:
+      - "7303:7301"
+    volumes:
+      - ./data_docker/node3:/data
+    restart: unless-stopped

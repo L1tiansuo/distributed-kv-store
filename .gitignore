@@ -1,0 +1,23 @@
+# 运行期数据（每个节点的 WAL、pid、日志）
+data/
+data_*/
+data_docker/
+
+# 实验结果里的临时/预览文件（results/*.json 要保留，报告的数字来源）
+_preview.pdf
+_*.png
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Office 临时文件
+~$*
+
+# 作业原始材料（课堂拍照），不入库
+要求/
+
+.DS_Store
+Thumbs.db
