@@ -233,7 +233,7 @@ rect(s, Inches(1.1), Inches(4.32), Inches(6.0), Inches(0.03), fill=LINE,
      shape=MSO_SHAPE.RECTANGLE)
 txbox(s, Inches(1.1), Inches(4.6), Inches(10.6), Inches(1.2),
       "组员：__________　__________　__________\n"
-      "代码仓库：https://github.com/L1tiansuo/-distributed-kv-store",
+      "代码仓库：https://github.com/L1tiansuo/distributed-kv-store",
       size=14, color=INK, line=1.6)
 txbox(s, Inches(1.1), Inches(6.45), Inches(10), Inches(0.4),
       "三副本 · 单主复制 · 写需多数派落盘 · 读线性一致 · 网页可现场注入故障",
@@ -619,7 +619,7 @@ txbox(s, Inches(1.1), Inches(2.0), Inches(10.8), Inches(2.0),
 txbox(s, Inches(1.1), Inches(4.6), Inches(10.8), Inches(0.5),
       "这些不是缺陷清单，是设计的样子。", size=16, color=MUTED)
 txbox(s, Inches(1.1), Inches(5.6), Inches(10.8), Inches(0.9),
-      "代码仓库：https://github.com/L1tiansuo/-distributed-kv-store\n"
+      "代码仓库：https://github.com/L1tiansuo/distributed-kv-store\n"
       "演示：python src/run.py --fresh　→　http://127.0.0.1:8080",
       size=13, color=INK, line=1.6)
 s.notes_slide.notes_text_frame.text = (

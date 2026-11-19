@@ -1,7 +1,7 @@
 # 分布式 KV Store —— 银行余额/转账场景
 
 > 华南师范大学《并行与分布》课程报告作业
-> 仓库地址：`https://github.com/L1tiansuo/-distributed-kv-store`
+> 仓库地址：`https://github.com/L1tiansuo/distributed-kv-store`
 
 一个 3 副本的 KV Store，用 Raft 风格的日志复制实现**线性一致**的读写，并针对"钱不能凭空多、也不能凭空少"这一个业务要求，把幂等、CAS、多数派提交这三件事做扎实。代码量约 1800 行 Python（含网页控制台），不依赖任何第三方库，`python run.py` 一条命令拉起集群，浏览器里点按钮就能杀节点、断网、注延迟。
 
