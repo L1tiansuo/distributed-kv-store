@@ -19,5 +19,8 @@ __pycache__/
 # 作业原始材料（课堂拍照），不入库
 要求/
 
+# 本地工作笔记（不属于项目本身）
+.workbuddy/
+
 .DS_Store
 Thumbs.db
