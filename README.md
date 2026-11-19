@@ -318,15 +318,35 @@ python client.py cas A 2 999
 python client.py bench --n 200 --concurrency 4
 ```
 
-### 方式三：Docker（可选，未参与实验）
+### 方式三：Docker（已实跑验证，但不是实验数据来源）
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 # 三个容器，宿主端口 7301/7302/7303
 python src/client.py --ports 7301,7302,7303 status
+docker compose down
 ```
 
-> 说明：仓库里的 `Dockerfile` / `docker-compose.yml` 已按容器网络写好（节点用 `--bind 0.0.0.0`，对等地址用服务名 `node2:7301`）。但**本报告的全部数据是在 Windows 下三进程方式跑出来的**，容器方式我们没有实际验证过——写在这里是为了给出部署路径，不是声称测过。演示也建议用多进程，现场不用等镜像构建。
+这套容器方案我们在这台机器上（Windows + Docker Desktop，linux 容器，16 核）完整跑过一遍，逐项结果：
+
+| 检查项 | 结果 |
+|---|---|
+| 镜像构建 | `alpine:3.20` + `apk add python3`，镜像 70.9 MB，约 1 分钟构建完成 |
+| 集群启动 | 三个容器起来后自动选主，term 1，leader = node3，三节点认识一致 |
+| 基本读写 | reset 到 1000×5，转账 A→B 100，余额 900/1100，总额 5000 |
+| 幂等 | 同一 req_id 连发 3 次，只扣一次，后两次返回 `duplicate: true`，日志下标都停在 3 |
+| 容器故障转移 | `docker stop` 掉 leader 容器后，node1 立刻在 term 2 上任，数据完整，新主可继续写 |
+| 重启追平 | `docker start` 重启被停容器，`commit_index` 从 3 追到 5，约 1 秒 |
+| 持久化 | 三个容器各在 `data_docker/nodeN/` 写出 `log.jsonl`（305 行）；`docker compose down` 后重新 `up`，数据从 WAL 完整恢复（`index` 到 306） |
+| 写性能 | 300 次写 174 / 183 ops/s，p50 5.2~5.4 ms，p99 9.7~10.7 ms |
+
+**容器比本地三进程慢约一半**：355 ops/s → 180 ops/s，p50 从 4.1 ms 涨到 5.2 ms。原因是 Windows 上容器网络跑在 WSL2 里，宿主端口映射出去要多过一层代理，不是共识实现的问题——p50 只多了 1.1 ms，正好是一次额外往返的量级。
+
+**报告和实验数据仍然以三进程为准**，两个理由：容器那 180 ops/s 混进了端口映射开销，量的是 Docker 的网络栈而不是我们的实现；另外三进程可以直接 `kill -9` 演示进程崩掉，容器里得绕一层。
+
+> 踩过的两个坑，记在这里免得别人再踩：
+> 1. `project name must not be empty`：本项目目录名是中文「并行与分布」，compose 无法从目录名推导项目名，不写 `name` 就直接报错。已在 `docker-compose.yml` 里显式写了 `name: kvstore`。
+> 2. `python:3.13-slim` 在这台机器上只有 20 KB/s，30 MB 要跑二十多分钟。换成 `alpine:3.20` + `apk add python3` 后一分钟装完，镜像也更小。节点代码只用标准库，两种基础镜像行为一致，这个替换不影响任何逻辑。
 
 ---
 
@@ -354,7 +374,8 @@ python src/client.py --ports 7301,7302,7303 status
 ├── report/               # 课程报告
 ├── ppt/                  # 讲解用 PPT
 ├── Dockerfile
-└── docker-compose.yml
+├── docker-compose.yml
+└── .dockerignore         # 构建上下文只留 src/node.py
 ```
 
 ---

@@ -1,0 +1,21 @@
+# 构建只需要 src/node.py，其余一律不进构建上下文
+.git
+.gitignore
+.workbuddy
+data
+data_docker
+data_exp
+data_smoke
+results
+report
+ppt
+docs
+tools
+experiments
+要求
+__pycache__
+*.pyc
+*.png
+*.pdf
+*.docx
+*.pptx

@@ -1,16 +1,29 @@
 # 3 副本 KV Store（容器方式，可选）
-# 三个节点各自一个容器，容器内统一用 7301，对外映射 7301/7302/7303。
-# 对等地址用服务名 node1/node2/node3，因此节点要 --bind 0.0.0.0。
 #
-#   docker compose up --build
+# 三个节点各自一个容器，容器内统一监听 7301，对外映射 7301/7302/7303。
+# 节点之间用 compose 的服务名互访（node1/node2/node3），所以容器内必须
+# --bind 0.0.0.0，否则只能听到容器自己的回环地址，节点之间连不通。
+#
+#   docker compose up -d --build
 #   python src/client.py --ports 7301,7302,7303 status
+#   docker compose down
 #
-# 注意：报告与实验数据都是在本机多进程方式下跑出来的，这套 compose 文件
-# 提供的是部署路径，未参与实验数据采集。
+# 这里显式指定 project name：本项目目录名是中文，compose 无法从目录名
+# 推导出项目名，不写这一行会直接报 "project name must not be empty"。
+name: kvstore
+
+# 三个服务只有 command/ports/volumes 不同，公共部分抽成锚点，
+# 顺带让三份服务共用同一个镜像名（否则会生成 node1/node2/node3 三个
+# 内容完全一样的 tag）。
+x-kvnode: &kvnode
+  build:
+    context: .
+  image: kvstore-node:latest
+  restart: unless-stopped
 
 services:
   node1:
-    build: .
+    <<: *kvnode
     command:
       - "--id=1"
       - "--port=7301"
@@ -21,10 +34,9 @@ services:
       - "7301:7301"
     volumes:
       - ./data_docker/node1:/data
-    restart: unless-stopped
 
   node2:
-    build: .
+    <<: *kvnode
     command:
       - "--id=2"
       - "--port=7301"
@@ -35,10 +47,9 @@ services:
       - "7302:7301"
     volumes:
       - ./data_docker/node2:/data
-    restart: unless-stopped
 
   node3:
-    build: .
+    <<: *kvnode
     command:
       - "--id=3"
       - "--port=7301"
@@ -49,4 +60,3 @@ services:
       - "7303:7301"
     volumes:
       - ./data_docker/node3:/data
-    restart: unless-stopped
