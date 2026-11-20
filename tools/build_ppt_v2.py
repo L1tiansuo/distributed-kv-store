@@ -133,10 +133,11 @@ def bullets(s, items, x=Inches(0.9), y=Inches(1.85), w=Inches(11.6),
     return tb
 
 
-def takeaway(s, text, top=Inches(6.15)):
+def takeaway(s, text, top=Inches(6.15), lead=""):
     rect(s, Inches(0.85), top, Inches(11.63), Inches(0.56), fill=NAVY_L)
+    label = (lead + "：" if lead else "") + text
     txbox(s, Inches(1.15), top, Inches(11.1), Inches(0.56),
-          "So what：" + text, size=14, bold=True, color=NAVY,
+          label, size=14, bold=True, color=NAVY,
           anchor=MSO_ANCHOR.MIDDLE)
 
 
@@ -303,7 +304,8 @@ for i, (num, t, sub, pg) in enumerate(seg):
           sub, size=12, color=MUTED, line=1.3)
     txbox(s, x + Inches(0.28), Inches(4.85), Inches(2.2), Inches(0.3),
           pg, size=11, color=MUTED)
-takeaway(s, "先听懂问题，再看懂机制，最后看数字 —— 来不及全听，记住第四段就行")
+takeaway(s, "先听懂问题，再看懂机制，最后看数字；来不及全听，记住第四段就行",
+         lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "这一页给听众地图，30 秒带过。\n"
     "「四段：先讲这个问题为什么难，再讲我们怎么解，然后放实验数据，最后是我们踩过的坑。\n"
@@ -341,7 +343,7 @@ bullets(s, [
     ("A 转了 B 一百块，机器 1 记了，机器 2 还没记，这时有人来机器 2 查余额", 1),
     ("网络慢一点、消息丢一条、机器慢半拍，三份账就开始对不上", 1),
 ], size=17, gap=8)
-takeaway(s, "副本解决「机器坏了」的问题，却引入了「各说各话」的问题")
+takeaway(s, "副本解决了「机器坏了」，却带来了「各说各话」", lead="所以")
 s.notes_slide.notes_text_frame.text = (
     "先肯定直觉：多存几份，方向是对的，防的就是单点故障。\n"
     "然后转折：「但三台机器不是三台复印机——每次转账都要通知另外两台，\n"
@@ -360,7 +362,7 @@ rows = [
 ]
 add_table(s, ["出事方式", "怎么发生的", "后果"], rows, [2.2, 5.4, 4.0],
           top=Inches(1.95), size=14)
-takeaway(s, "后面每一页设计，都是在堵这四个洞里的一个")
+takeaway(s, "后面每一页设计，都是在堵这四个洞里的一个", lead="记住这张表")
 s.notes_slide.notes_text_frame.text = (
     "这一页是全场最重要的问题清单，讲慢一点，逐行讲：\n"
     "第一行「假成功」：回复了你成功，但数据只在一个地方，那个地方没了就什么都没了。\n"
@@ -382,7 +384,7 @@ metrics(s, three, top=Inches(1.95))
 txbox(s, Inches(0.9), Inches(5.15), Inches(11.6), Inches(0.9),
       "第①②洞由「一个主 + 多数派」堵，第③洞由幂等堵，第④洞由「认主才读」堵",
       size=14, color=MUTED)
-takeaway(s, "没有新发明：把每条规则都对应到一个会出事的场景")
+takeaway(s, "没有新发明：把每条规则都对应到一个会出事的场景", lead="说白了")
 s.notes_slide.notes_text_frame.text = (
     "用三句话概括全部设计，这是听众最该记住的一页：\n"
     "「第一句：只有一个主，所有写都到它那里排队。第二句：写进两台才算成功。\n"
@@ -403,7 +405,7 @@ two_col(s,
         "为什么故意做简单",
         ["每一行都能在答辩时说清「为什么」",
          "同学能读懂，老师能顺着问下去",
-         "简单 ≠ 偷懒：简单的是代码，不简单的是取舍"],
+         "功能少不是偷懒：每省掉一个功能，都答得出为什么不写"],
         right_color=ACCENT)
 takeaway(s, "我们追求的不是功能多，是「敢被问」")
 s.notes_slide.notes_text_frame.text = (
@@ -433,7 +435,7 @@ steps(s, [
 txbox(s, Inches(0.9), Inches(5.25), Inches(11.6), Inches(0.8),
       "关键：第 4 步只等「一台」回话 —— 三台里任意两台活着，写就能成功",
       size=14, color=MUTED)
-takeaway(s, "「写成功」的真实含义：至少两台机器的硬盘里都有这笔账")
+takeaway(s, "「写成功」的真实含义：至少两台机器的硬盘里都有这笔账", lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "这一页是全片技术核心，按编号一步一步讲，讲完一步停半秒：\n"
     "「第一步，请求带一个编号，这个编号后面幂等要用。第二步，主节点先写进自己的日志并且落盘。\n"
@@ -472,7 +474,7 @@ bullets(s, [
     ("规则三：谁的日志更新，谁才有资格当选", 1),
     ("这套规则就是 Raft 的简化版，我们实现了投票、任期、日志新旧比较", 0),
 ], size=17, gap=8)
-takeaway(s, "过半投票 → 任意时刻最多一个主；任期号 → 旧的命令自动失效")
+takeaway(s, "过半投票 → 任意时刻最多一个主；任期号 → 旧的命令自动失效", lead="所以")
 s.notes_slide.notes_text_frame.text = (
     "第一次出现 Raft 这个词，先给直觉再报名字：\n"
     "「就像一个小组选一个组长：要过半数同意才算数，每一任有编号，越新的编号越大。\n"
@@ -494,7 +496,7 @@ two_col(s,
          "它被隔离，永远凑不齐两台",
          "所以旧主的写一条也提交不了"],
         left_color=RED, right_color=GREEN)
-takeaway(s, "多数派是一票否决权：凑不齐人，就算你自称老大，也一笔记不进去")
+takeaway(s, "多数派是一票否决权：凑不齐人，就算你自称老大，也一笔记不进去", lead="记住这条")
 s.notes_slide.notes_text_frame.text = (
     "这页回答上一页留下的疑问：\n"
     "「组长被关在门外了，他不知道屋里已经选出新组长，还在门口发号施令，怎么办？」\n"
@@ -514,7 +516,7 @@ bullets(s, [
     ("我们的做法 read-index：读之前，主节点先向多数派确认「我还是主」", 0),
     ("确认通过 + 本地数据已跟上 → 才返回余额", 1),
 ], size=17, gap=6)
-takeaway(s, "读和写走同一条「多数派」防线 —— 这样读到的每一笔都是已提交的")
+takeaway(s, "读和写走同一条多数派防线，读到的每一笔都是已提交的", lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "「写要小心，读也一样。最容易想错的一句是：从主节点读不就行了？\n"
     "问题是，上一页那个被关门的旧组长，它也是主——旧的主。\n"
@@ -535,7 +537,7 @@ two_col(s,
          "把抽象的一致性变成「能看到的差别」",
          "证明默认路径（线性读）确实在起作用"],
         left_color=RED, right_color=GREEN)
-takeaway(s, "脏读不是 bug，是对照组 —— 没有对照，就说不清默认路径保护了什么")
+takeaway(s, "脏读不是 bug，是对照组。没有对照，就说不清默认路径保护了什么")
 s.notes_slide.notes_text_frame.text = (
     "「我们代码里留了一个开关，打开它就退回到「随便读」。\n"
     "留着它不是为了耍酷：实验五 D 段里，同一时刻旧主脏读返回 1000，新主返回 700。\n"
@@ -553,7 +555,7 @@ bullets(s, [
     ("这是分布式系统里最经典、也最容易翻车的事故", 0),
     ("我们的要求：同一个请求来多少次，都只生效一次 —— 这叫「幂等」", 0),
 ], size=17, gap=8)
-takeaway(s, "「重试」是客户端的本能，「只生效一次」必须是服务端的保证")
+takeaway(s, "「重试」是客户端的本能，「只生效一次」必须是服务端的保证", lead="说白了")
 s.notes_slide.notes_text_frame.text = (
     "这一页先从生活经验讲起：\n"
     "「你转账没收到短信，会再转一次吗？会的。客户端也一样。\n"
@@ -574,7 +576,7 @@ two_col(s,
          "换主之后，新主也认得这个编号",
          "代价：每次写都要带着它，多一点点开销"],
         left_color=NAVY, right_color=GREEN)
-takeaway(s, "幂等不是「记住请求」，是让第二次来的人，看到第一次的结果")
+takeaway(s, "幂等不是「记住请求」，是让第二次来的人，看到第一次的结果", lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "「两层：主节点脑子里记一份（快），账本里再记一份（稳）。\n"
     "为什么要两层？因为换主的时候，脑子里的那份会跟着旧主一起消失。\n"
@@ -596,7 +598,7 @@ two_col(s,
          "日志项要么应用、要么不应用",
          "原子性由日志天然保证"],
         left_color=MUTED, right_color=GREEN)
-takeaway(s, "用日志项的原子性，换掉了整个事务协议 —— 这是省掉代码最多的一页")
+takeaway(s, "用日志项的原子性，换掉了整个事务协议，这是省掉代码最多的一页", lead="所以")
 s.notes_slide.notes_text_frame.text = (
     "「跨账户转账要原子：A 扣了 B 没加，就是印钱事故。\n"
     "教科书做法是两阶段提交，我们没用。\n"
@@ -614,7 +616,8 @@ bullets(s, [
     ("提交进度只 flush 不 fsync —— 丢了能从日志重算", 1),
     ("实测：容器整个杀掉再启动，305 条日志全部重放，数据完整", 0),
 ], size=17, gap=8)
-takeaway(s, "凡是「不能从别处算出来」的状态才 fsync，能算出来的就不浪费这 3.6 毫秒")
+takeaway(s, "凡是「不能从别处算出来」的状态才 fsync，能算出来的就不浪费这 3.6 毫秒",
+         lead="记住这条")
 s.notes_slide.notes_text_frame.text = (
     "「持久化的核心动作叫 WAL：先写日志，再干活。\n"
     "就像你先记账再花钱，断电了翻账本就能补齐。\n"
@@ -640,7 +643,7 @@ bullets(s, [
     ("客户端复用连接 —— 不然测出来的是建连开销，不是写延迟", 1),
     ("全部原始数据在仓库 results/*.json，随时可复算", 0),
 ], size=17, gap=8)
-takeaway(s, "我们花了一半力气让「测量本身」不撒谎 —— 后面每个数字都经得起复现")
+takeaway(s, "我们花了一半力气让测量本身不撒谎，后面每个数字都经得起复现")
 s.notes_slide.notes_text_frame.text = (
     "「先说方法，再说数据，因为方法不对，数据就是假的。\n"
     "举两个真实的教训：一开始我们测出来的写延迟带着『每次新建连接』的开销，\n"
@@ -658,7 +661,7 @@ add_table(s, ["轮次", "选主耗时", "说明"],
            ("4", "390 ms", ""),
            ("5", "436 ms", "")],
           [1.6, 2.2, 7.8], top=Inches(1.9), size=14)
-takeaway(s, "问题不是「会不会丢」——是「多久恢复」：半秒上下，数据零丢失")
+takeaway(s, "问题不是会不会丢，是多久恢复：半秒上下，数据零丢失", lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "「五轮实测，把主节点直接杀掉，看多久选出新主。\n"
     "第一轮最慢，1075 毫秒——原因我们也查了：一个日志落后的节点先给自己投了一票，\n"
@@ -680,7 +683,8 @@ two_col(s,
          "「订单-001」这条写，从账本上消失了",
          "客户端当初收到的可是「成功」"],
         left_color=MUTED, right_color=RED)
-takeaway(s, "quorum=1 换来的是分区时还能写，丢掉的是「写成功」这三个字的分量")
+takeaway(s, "quorum=1 换来的是分区时还能写，丢掉的是「写成功」这三个字的分量",
+         lead="所以")
 s.notes_slide.notes_text_frame.text = (
     "「这是全场最有戏剧性的一组：把多数派要求从 2 改成 1，再断网。\n"
     "两边都能写，两边都说成功。网一恢复，一边的数据被另一边整个盖掉，\n"
@@ -699,7 +703,7 @@ metrics(s, [
 txbox(s, Inches(0.9), Inches(5.15), Inches(11.6), Inches(0.9),
       "后两次的返回里是 duplicate: true —— 不是报错，是把第一次的结果原样再给一次",
       size=14, color=MUTED)
-takeaway(s, "客户端可以放心重试 —— 这是「幂等」两个字值多少钱的现场报价")
+takeaway(s, "客户端可以放心重试，这就是幂等两个字值多少钱的现场报价", lead="一句话")
 s.notes_slide.notes_text_frame.text = (
     "「用同一个请求编号连发三次，其中一次故意让回复丢在路上。\n"
     "结果：只扣了一次钱，后两次服务端返回的是第一次的结果，标着 duplicate。\n"
@@ -716,7 +720,7 @@ add_table(s, ["注入的故障", "现象", "结果"],
            ("时钟拨回 60 秒", "时间戳乱了", "定序靠任期和日志下标，不受影响"),
            ("网络分区 1|2", "旧主被孤立", "旧主拒写，多数派一侧照常服务")],
           [3.0, 4.2, 4.4], top=Inches(1.9), size=13)
-takeaway(s, "每条故障都提前写了预期，然后现象、数据逐条对上")
+takeaway(s, "每条故障都提前写了预期，然后现象、数据逐条对上", lead="落到一点")
 s.notes_slide.notes_text_frame.text = (
     "「题目的故障清单九条，我们挑了代表性的注入。\n"
     "注意第三行：把时钟拨回一分钟，系统毫无反应——\n"
@@ -732,7 +736,8 @@ add_table(s, ["代价项", "数字", "说明"],
            ("单主串行", "360 ≈ 374 ops/s", "热点单 key 和多 key 一样快——瓶颈在日志串行，不在锁"),
            ("容器部署", "183 vs 355 ops/s", "比裸进程慢一半，多的是端口映射那一跳，不是实现")],
           [2.6, 3.4, 5.6], top=Inches(1.9), size=13)
-takeaway(s, "性能的上限不是我们没优化，是「强一致 + 单主」这个选择本身的价签")
+takeaway(s, "性能的上限不是我们没优化，是「强一致 + 单主」这个选择本身的价签",
+         lead="说白了")
 s.notes_slide.notes_text_frame.text = (
     "「三笔账：第一笔，落盘占掉大部分吞吐，这是安全的价。\n"
     "第二笔，写热点账户和写不同账户一样快，说明瓶颈不在锁竞争，在日志本身要排队。\n"
@@ -774,7 +779,8 @@ add_table(s, ["坑", "现象", "修法"],
            ("定时落盘卡写", "每 200ms 一次 fsync，p99 飙到 63ms", "定时保存只 flush 不 fsync，降到 9ms"),
            ("连上了旧进程", "Windows 下端口被旧进程占用", "换独占模式 + 启动前清理残留")],
           [2.8, 4.4, 4.6], top=Inches(1.9), size=13)
-takeaway(s, "每个坑都始于一个「以为对了」—— 这比「我们实现了 Raft」更能说明真的做过")
+takeaway(s, "每个坑都始于一个「以为对了」，这比「我们实现了 Raft」更能说明真的做过",
+         lead="落到一点")
 s.notes_slide.notes_text_frame.text = (
     "「四个都是真 bug。挑第一个细讲：换主的时候，客户端等的那条日志被新的空操作顶掉了，\n"
     "客户端收到的就是空操作的结果——钱其实没转，客户端却以为转了。\n"
@@ -797,7 +803,7 @@ two_col(s,
          "三节点够用，协议要复杂得多",
          "选了单主，就接受这个天花板"],
         left_color=MUTED, right_color=NAVY)
-takeaway(s, "范围外的正确，比范围内的错误更危险 —— 这份清单是设计的一部分")
+takeaway(s, "没做的每一件都答得出为什么，这份清单本身就是设计的一部分")
 s.notes_slide.notes_text_frame.text = (
     "「最后主动交代没做什么：pre-vote、快照、成员变更、多主。\n"
     "每一条都说得出为什么不做的理由，而不是『来不及』。\n"
@@ -814,7 +820,7 @@ rect(s, Inches(0), Inches(0), Inches(0.22), H, fill=NAVY, shape=MSO_SHAPE.RECTAN
 txbox(s, Inches(1.1), Inches(1.15), Inches(10.5), Inches(0.4),
       "一句话总结", size=14, color=ACCENT, bold=True)
 txbox(s, Inches(1.1), Inches(1.7), Inches(11.2), Inches(2.0),
-      "三副本、一个主、多数派落盘、幂等去重——\n选了单主，就接受单主的天花板；\n这些不是缺陷清单，是设计的样子。",
+      "三副本、一个主、多数派落盘、幂等去重——\n选了单主，就接受单主的天花板；\n这些权衡不是没做好，是这个样子本来就要付的价。",
       size=26, bold=True, color=NAVY, line=1.5)
 rect(s, Inches(1.1), Inches(4.35), Inches(6.0), Inches(0.03), fill=LINE,
      shape=MSO_SHAPE.RECTANGLE)
