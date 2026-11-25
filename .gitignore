@@ -24,3 +24,6 @@ __pycache__/
 
 .DS_Store
 Thumbs.db
+
+# 对外分发的打包文件
+分布式KVStore_课程作业_*.zip
