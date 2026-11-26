@@ -127,6 +127,7 @@
         <button class="btn" onclick="post('/api/node',{id:3,action:'restart'})">重启节点3</button>
       </div>
       <div class="row">
+        <button class="btn warn" onclick="isolateLeader()">分区：隔离当前 leader</button>
         <button class="btn warn" onclick="post('/api/partition',{groups:[[1],[2,3]]})">分区：孤主 1 | 2,3</button>
         <button class="btn warn" onclick="post('/api/partition',{groups:[[1,2],[3]]})">分区：1,2 | 3</button>
         <button class="btn" onclick="post('/api/heal',{})">恢复网络</button>
@@ -179,6 +180,14 @@ async function post(url, body){
   return j;
 }
 
+async function isolateLeader(){
+  const L = window.curLeader;
+  if (!L) { alert('当前没有 leader（正在选主），等一两秒再点'); return; }
+  const others = [1, 2, 3].filter(i => i !== L);
+  const j = await post('/api/partition', {groups: [[L], others]});
+  if (j.ok === false) alert('分区失败：' + (j.error || '未知原因'));
+}
+
 async function refresh(){
   let d;
   try { d = await getJSON('/api/cluster'); } catch(e){ return; }
@@ -187,6 +196,7 @@ async function refresh(){
   renderEvents(d.events);
   el('leaderPill').textContent = d.leader ? ('leader：节点 ' + d.leader) : 'leader：无（选主中）';
   el('leaderPill').className = 'pill ' + (d.leader ? 'ok' : 'bad');
+  window.curLeader = d.leader;
   el('totalPill').textContent = '总余额：' + (d.total==null ? '—' : d.total);
   el('clockPill').textContent = '快照 ' + new Date().toLocaleTimeString();
 }
